@@ -8,6 +8,7 @@ from wtforms import StringField, SubmitField
 from wtforms.validators import Required
 from flask_sqlalchemy import SQLAlchemy
 from flask_script import Shell
+from flask_migrate import Migrate, MigrateCommand
 import os
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -22,6 +23,13 @@ manager = Manager(app)
 bootstrap = Bootstrap(app)
 moment = Moment(app)
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+manager.add_command('db', MigrateCommand)
+
+def make_shell_context():
+	return dict(app=app, db=db, User=User, Role=Role)
+
+manager.add_command("shell", Shell(make_context=make_shell_context))
 
 class NameForm(FlaskForm):
 	name = StringField('What is your name?', validators=[Required()])
@@ -76,11 +84,6 @@ def page_not_found(e):
 @app.errorhandler(500)
 def internal_server_error(e):
 	return render_template('500.html'), 500
-
-def make_shell_context():
-	return dict(app=app, db=db, User=User, Role=Role)
-
-manager.add_command("shell", Shell(make_context=make_shell_context))
 
 if __name__ == '__main__':
 	manager.run()
